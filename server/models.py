@@ -2,51 +2,35 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import validates
 from sqlalchemy_serializer import SerializerMixin
 
-
 db = SQLAlchemy()
 
 class Episode(db.Model, SerializerMixin):
     __tablename__ = 'episodes'
 
     id = db.Column(db.Integer, primary_key=True)
-    date = db.Column(db.String)
-    number = db.Column(db.String)
-    
-    #Relationshio mapping Episode to related Appearance
-    appearances = db.relationship('Appearance', backref='episode', lazy=True)
-    
+    date = db.Column(db.String(255))  # Set a max length for the date string
+    number = db.Column(db.String(255))  # Set a max length for the episode number
+
+    # Relationship mapping Episode to related Appearance
+    appearances = db.relationship('Appearance', backref='episode', lazy='joined')
+
     serialize_rules = ('-appearances.episode',)
-    
-    def to_dict(self):
-        episode_dict = {
-            'id': self.id,
-            'date': self.date,
-            'number': self.number,
-        }
-        return episode_dict
 
     def __repr__(self):
         return f'<Episode {self.id}: {self.number}>'
 
 class Guest(db.Model, SerializerMixin):
     __tablename__ = 'guests'
-    
+
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
-    occupation = db.Column(db.String)
-    
-    #Relationship mapping Guest to Appearances
-    appearances = db.relationship('Appearances', backref='guest', lazy=True)
-    
-    serialize_rules = ('-appearance.guest',)
-    
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'name': self.name,
-            'occupation': self.occupation
-        }
-    
+    name = db.Column(db.String(255), nullable=False)  # Ensure name is not null
+    occupation = db.Column(db.String(255))  # Set a max length for the occupation string
+
+    # Relationship mapping Guest to Appearance
+    appearances = db.relationship('Appearance', backref='guest', lazy='joined')
+
+    serialize_rules = ('-appearances.guest',)
+
     def __repr__(self):
         return f'<Guest {self.id}: {self.name}; {self.occupation}>'
 
@@ -71,9 +55,9 @@ class Appearance(db.Model, SerializerMixin):
             'rating': self.rating,
             'episode_id': self.episode_id,
             'guest_id': self.guest_id,
-            'episode': self.episode.to_dict(),
-            'guest': self.guest.to_dict()
+            'episode': self.episode.to_dict() if self.episode else None,  # Avoids errors if episode is None
+            'guest': self.guest.to_dict() if self.guest else None  # Avoids errors if guest is None
         }
-    
+
     def __repr__(self):
-        return f'<Hero-Power {self.id}: {self.strength} {self.hero_id} {self.power_id}>'
+        return f'<Appearance {self.id}: Episode {self.episode_id}, Guest {self.guest_id}, Rating {self.rating}>'

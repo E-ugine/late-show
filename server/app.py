@@ -4,7 +4,7 @@ from flask import Flask, request, make_response, jsonify
 from flask_restful import Resource, Api
 from flask_migrate import Migrate
 
-from models import db, Episode, Guest, Appearance
+from models import db, Episode as EpisodeModel, Guest, Appearance
 
 app = Flask(__name__)
 api = Api(app)
@@ -17,16 +17,16 @@ db.init_app(app)
 
 @app.route('/')
 def home():
-    return 'successful'
-class Episode(Resource):
+    return 'LATESHOW API SUCCESSFULLY CREATED!'
+
+class Episode(Resource):  # Change this class name to avoid conflict
     def get(self):
         shows = []
-        for show in Episode.query.all():
+        for show in EpisodeModel.query.all():  # Use the renamed model here
             show_dict = {
                 "id": show.id,
-                "name": show.name,
-                "host": show.host,
-                "air_date": show.air_date
+                "date": show.date,  # Adjusted to match your model
+                "number": show.number  # Adjusted to match your model
             }
             shows.append(show_dict)
         return make_response(jsonify(shows), 200)
@@ -38,9 +38,7 @@ class EpisodesId(Resource):
         if show:
             show_dict = {
                 "id": show.id,
-                "name": show.name,
-                "host": show.host,
-                "air_date": show.air_date,
+                "name": show.number,  # Adjust if necessary for the appropriate attribute
                 "appearances": []
             }
 
@@ -48,13 +46,14 @@ class EpisodesId(Resource):
                 appearance_dict = {
                     "id": appearance.id,
                     "guest_name": appearance.guest.name,
-                    "role": appearance.role
+                    # Remove the role attribute
                 }
                 show_dict["appearances"].append(appearance_dict)
 
             return make_response(jsonify(show_dict), 200)
         else:
             return make_response(jsonify({"error": "Show not found"}), 404)
+
 
 class Guests(Resource):
     def get(self):
@@ -63,7 +62,7 @@ class Guests(Resource):
             guest_dict = {
                 "id": guest.id,
                 "name": guest.name,
-                "profession": guest.profession
+                "occupation": guest.occupation
             }
             guests.append(guest_dict)
         return make_response(jsonify(guests), 200)
@@ -71,13 +70,13 @@ class Guests(Resource):
     def post(self):
         data = request.get_json()
 
-        if not all(key in data for key in ['name', 'profession']):
+        if not all(key in data for key in ['name', 'occupation']):
             return make_response(jsonify({"errors": ["Missing data fields"]}), 400)
 
         try:
             new_guest = Guest(
                 name=data.get('name'),
-                profession=data.get('profession')
+                occupation=data.get('occupation')
             )
             db.session.add(new_guest)
             db.session.commit()
@@ -95,7 +94,7 @@ class GuestsId(Resource):
             guest_dict = {
                 "id": guest.id,
                 "name": guest.name,
-                "profession": guest.profession
+                "occupation": guest.occupation
             }
             return make_response(jsonify(guest_dict), 200)
         else:
@@ -122,7 +121,7 @@ class Appearances(Resource):
     def post(self):
         data = request.get_json()
 
-        required_fields = ['role', 'guest_id', 'show_id']
+        required_fields = ['role', 'guest_id', 'episode_id']
         missing_fields = [field for field in required_fields if field not in data]
 
         if missing_fields:
@@ -130,15 +129,15 @@ class Appearances(Resource):
 
         try:
             guest = db.session.get(Guest, data['guest_id'])
-            show = db.session.get(Episode, data['show_id'])
+            episode = db.session.get(EpisodeModel, data['episode_id'])
 
-            if not guest or not show:
-                return {"errors": ["Invalid 'guest_id' or 'show_id'"]}, 400
+            if not guest or not episode:
+                return {"errors": ["Invalid 'guest_id' or 'episode_id'"]}, 400
 
             new_appearance = Appearance(
                 role=data['role'],
                 guest_id=data['guest_id'],
-                show_id=data['show_id']
+                episode_id=data['episode_id']
             )
             db.session.add(new_appearance)
             db.session.commit()
@@ -147,9 +146,9 @@ class Appearances(Resource):
                 'id': new_appearance.id,
                 'role': new_appearance.role,
                 'guest_id': new_appearance.guest_id,
-                'show_id': new_appearance.show_id,
+                'episode_id': new_appearance.episode_id,
                 'guest': guest.to_dict(rules=('-appearances.guest',)),
-                'show': show.to_dict(rules=('-appearances.show',))
+                'episode': episode.to_dict(rules=('-appearances.episode',))
             }
 
             return make_response(jsonify(response_data), 201)
@@ -159,7 +158,7 @@ class Appearances(Resource):
             print("Error occurred:", e)
             return {"errors": ["An error occurred while creating Appearance"]}, 500
 
-api.add_resource(Episode, '/episodes')
+api.add_resource(Episode, '/episodes')  # Updated endpoint
 api.add_resource(EpisodesId, '/episodes/<int:id>')
 api.add_resource(Guests, '/guests')
 api.add_resource(GuestsId, '/guests/<int:id>', methods=['GET', 'PATCH'])
