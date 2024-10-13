@@ -8,8 +8,8 @@ class Episode(db.Model, SerializerMixin):
     __tablename__ = 'episodes'
 
     id = db.Column(db.Integer, primary_key=True)
-    date = db.Column(db.String(255))  # Set a max length for the date string
-    number = db.Column(db.String(255))  # Set a max length for the episode number
+    date = db.Column(db.Date, nullable=False)  # Use db.Date for date storage
+    number = db.Column(db.String(255), nullable=False)  # Ensure episode number is not null
 
     # Relationship mapping Episode to related Appearance
     appearances = db.relationship('Appearance', backref='episode', lazy='joined')
@@ -45,19 +45,12 @@ class Appearance(db.Model, SerializerMixin):
 
     @validates('rating')
     def validate_rating(self, key, value):
-        if value < 1 or value > 5:
+        if value is not None and (value < 1 or value > 5):  # Ensure rating is optional if not given
             raise ValueError('Rating must be between 1 and 5')
         return value
 
     def to_dict(self):
-        return {
-            'id': self.id,
-            'rating': self.rating,
-            'episode_id': self.episode_id,
-            'guest_id': self.guest_id,
-            'episode': self.episode.to_dict() if self.episode else None,  # Avoids errors if episode is None
-            'guest': self.guest.to_dict() if self.guest else None  # Avoids errors if guest is None
-        }
+        return self.serialize()
 
     def __repr__(self):
         return f'<Appearance {self.id}: Episode {self.episode_id}, Guest {self.guest_id}, Rating {self.rating}>'
