@@ -4,7 +4,7 @@ from flask import Flask, request, make_response, jsonify
 from flask_restful import Resource, Api
 from flask_migrate import Migrate
 
-from models import db, Show, Guest, Appearance
+from models import db, Episode, Guest, Appearance
 
 app = Flask(__name__)
 api = Api(app)
@@ -18,10 +18,10 @@ db.init_app(app)
 @app.route('/')
 def home():
     return 'successful'
-class Shows(Resource):
+class Episode(Resource):
     def get(self):
         shows = []
-        for show in Show.query.all():
+        for show in Episode.query.all():
             show_dict = {
                 "id": show.id,
                 "name": show.name,
@@ -31,9 +31,9 @@ class Shows(Resource):
             shows.append(show_dict)
         return make_response(jsonify(shows), 200)
 
-class ShowsId(Resource):
+class EpisodesId(Resource):
     def get(self, id):
-        show = Show.query.filter(Show.id == id).first()
+        show = Episode.query.filter(Episode.id == id).first()
         
         if show:
             show_dict = {
@@ -130,7 +130,7 @@ class Appearances(Resource):
 
         try:
             guest = db.session.get(Guest, data['guest_id'])
-            show = db.session.get(Show, data['show_id'])
+            show = db.session.get(Episode, data['show_id'])
 
             if not guest or not show:
                 return {"errors": ["Invalid 'guest_id' or 'show_id'"]}, 400
@@ -159,8 +159,8 @@ class Appearances(Resource):
             print("Error occurred:", e)
             return {"errors": ["An error occurred while creating Appearance"]}, 500
 
-api.add_resource(Shows, '/shows')
-api.add_resource(ShowsId, '/shows/<int:id>')
+api.add_resource(Episode, '/episodes')
+api.add_resource(EpisodesId, '/episodes/<int:id>')
 api.add_resource(Guests, '/guests')
 api.add_resource(GuestsId, '/guests/<int:id>', methods=['GET', 'PATCH'])
 api.add_resource(Appearances, '/appearances', methods=['POST'])
