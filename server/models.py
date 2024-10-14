@@ -8,8 +8,8 @@ class Episode(db.Model, SerializerMixin):
     __tablename__ = 'episodes'
 
     id = db.Column(db.Integer, primary_key=True)
-    date = db.Column(db.Date, nullable=False)  # Use db.Date for date storage
-    number = db.Column(db.String(255), nullable=False)  # Ensure episode number is not null
+    date = db.Column(db.Date, nullable=False) 
+    number = db.Column(db.String(255), nullable=False) 
 
     # Relationship mapping Episode to related Appearance
     appearances = db.relationship('Appearance', backref='episode', lazy='joined')
@@ -23,8 +23,8 @@ class Guest(db.Model, SerializerMixin):
     __tablename__ = 'guests'
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(255), nullable=False)  # Ensure name is not null
-    occupation = db.Column(db.String(255))  # Set a max length for the occupation string
+    name = db.Column(db.String(200), nullable=False) 
+    occupation = db.Column(db.String(200)) 
 
     # Relationship mapping Guest to Appearance
     appearances = db.relationship('Appearance', backref='guest', lazy='joined')
@@ -45,7 +45,7 @@ class Appearance(db.Model, SerializerMixin):
 
     @validates('rating')
     def validate_rating(self, key, value):
-        if value is not None and (value < 1 or value > 5):  # Ensure rating is optional if not given
+        if value is not None and (value < 1 or value > 5): 
             raise ValueError('Rating must be between 1 and 5')
         return value
 

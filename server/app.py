@@ -81,7 +81,6 @@ class Appearances(Resource):
         guest_id = request.form.get("guest_id")
         episode_id = request.form.get("episode_id")
 
-        # Check for missing fields
         if not guest_id or not episode_id:
             missing_fields = []
             if not guest_id:
@@ -90,7 +89,7 @@ class Appearances(Resource):
                 missing_fields.append("episode_id")
             return jsonify({"errors": [f"Missing field: {field}" for field in missing_fields]}), 400
 
-        # Validate that guest_id and episode_id exist in their respective tables
+        # Fetching the Guest and Episode from the database
         guest = Guest.query.get(guest_id)
         episode = EpisodeModel.query.get(episode_id)
 
@@ -99,7 +98,7 @@ class Appearances(Resource):
         if not episode:
             return jsonify({"errors": "Episode not found"}), 404
 
-        # Creating the new Appearance
+        # Creating a new Appearance object and adding it to the database
         try:
             new_appearance = Appearance(
                 guest_id=guest_id,
@@ -109,7 +108,7 @@ class Appearances(Resource):
             db.session.add(new_appearance)
             db.session.commit()
 
-            # Response data structure
+            # Returning the newly created Appearance object as JSON response
             appearance_dict = {
                 "id": new_appearance.id,
                 "guest_id": new_appearance.guest_id,
@@ -127,9 +126,9 @@ class Appearances(Resource):
             }
             return jsonify(appearance_dict), 201
 
-        # Error handling for database operations
+       
         except Exception as e:
-            db.session.rollback()  # Roll back the session in case of error
+            db.session.rollback()  
             print("Error occurred:", e)
             return jsonify({"errors": ["An error occurred while creating Appearance"]}), 500
 

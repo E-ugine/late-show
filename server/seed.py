@@ -3,14 +3,15 @@ import sys
 import os
 from flask_sqlalchemy import SQLAlchemy
 from flask import Flask
-from sqlalchemy.exc import IntegrityError  # Corrected import
+from sqlalchemy.exc import IntegrityError 
 from app import app
 from models import db, Guest, Episode, Appearance
 
-# Create an application context
+
+# Initialize Flask app
 with app.app_context():
 
-    # Create sample guests
+   
     guests = [
         Guest(name="John Mwangi", occupation="Actor"),
         Guest(name="Jane Achieng", occupation="Musician"),
@@ -24,7 +25,6 @@ with app.app_context():
         Guest(name="Sophia Mutheu", occupation="Influencer")
     ]
 
-    # Create sample episodes
     episodes = [
         Episode(date="2023-01-01", number=1),
         Episode(date="2023-01-02", number=2),
@@ -38,7 +38,6 @@ with app.app_context():
         Episode(date="2023-01-10", number=10)
     ]
 
-    # Create sample appearances
     appearances = [
         Appearance(rating=5, guest=guests[0], episode=episodes[0]),
         Appearance(rating=4, guest=guests[1], episode=episodes[1]),
@@ -53,12 +52,10 @@ with app.app_context():
     ]
 
     try:
-        # Add guests and episodes to the session
         db.session.add_all(guests)
         db.session.add_all(episodes)
         db.session.add_all(appearances)
 
-        # Commit the session to save data
         db.session.commit()
         print("Database seeded successfully!")
     except IntegrityError as e:
